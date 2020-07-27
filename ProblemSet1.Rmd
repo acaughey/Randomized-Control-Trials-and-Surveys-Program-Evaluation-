@@ -1,0 +1,290 @@
+---
+title: "Program Eval Pset 1"
+author: "Andrew Caughey"
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(stats)
+library(broom)
+burlig_dta<-read.csv("/Users/ajcaughey/Desktop/School/Harris Courses/Spring 2020/How China is Changing the World/Problem set 1/ps1_data.csv")
+```
+
+*1.* BURLIG would like to know about the income impacts of their loans. They say they’re interested in measuring the impact of their loans, but don’t exactly know what that means. Use the potential outcomes framework to describe the impact of treatment (defined as “taking a small business loan”) for firm i on wages (measured in dollars paid to workers) formally (in math) and in words.
+
+Lets say that values of $D$ indicate wheter or not a firm has been assigned to recieved the treatment, meaning offted to take a small business loan. 
+$D = 1$ means they are assigned to the treatment group 
+$D = 0$ means they are assigned to the control group and not offered the treatment
+
+Then, let's have $Y$ indicate the outcome for a firm. 
+When a firm is offered a loan as part of the treatment, they have $Y(1)$
+When a firm is not offered a loan as part of the treatment, they have $Y(0)$
+
+For any specific firm, the impact of the program would just be $$Y_i(1) - Y_i(0)$$
+
+Unfortunately, we won't actually get to observe one of these values. For example, once a firm takes a loan as part of the treatment program, we never observe the impact on that firm if they *hadn't* taken that loan. This is the fundamental problem of causal inference. Now, we could think about comparing the average outcome of the two groups, but we need to be careful abou tthis too. In math, the calculation to compare the observed outcomes for the treatment and control groups looks like this for the treatment group: 
+
+$$E[Y_i(1) = E[Y_i(1) | D_i = 1] = E[Y_i(1) | D_i = 0]$$
+and this for the control:
+
+
+$$E[Y_i(0) = E[Y_i(0) | D_i = 0] = E[Y_i(0) | D_i = 0]$$
+Now, we might be tempted to substract the outcome for the control group from the treatment group and be done with it, but this assumes that the treatment group is a good counterfactual for the control group. In other words, we assume the two groups have similar baseline characteristics and are comporable to each other, when this might actually not be the case. We need to make sure there isn't a selection problem, meaning the group that received treatment is statistically similar to the group that did not. Otherwise, our estimate isn't really assessing the *causal* impact of the program, but could instead be picking up the effect of a bunch of other underlying differences between the two groups that might have an impact on our outcome. 
+
+*2.* BURLIG are extremely impressed. They want to know how they can go about measuring 𝜏_i. Let them down gently, but explain to them why estimating 𝜏_i is impossible.
+
+Unfortunately, we aren't able to measure the actual causal effect the treatment will have on specific individuals. This ties back to the fundamental problem of causal inference, which sounds very fancy, but boils down to this: once an individual firm recieves a loan, we won't be able to know for sure what that firm have done if they *hadn't* recieved a loan. Similarly, we don't know what the untreated firms would have done *had* they received a loan. The cruel nature of time means that we only get to see our firms's outcome once they have already been treated or once they have been included in the control group. Now, this doesn't mean that we can't estimate other important causal effects of the treatment loan program, but these estimates will be an aggregate description based on the  sample and won't describe the individual, specific firms. We can, however, compare different subgroups of firms with similar baseline characteristics to draw inferences about similar firms, but this principle can't be expanded to draw inferences from only one individual firms.  
+
+
+*3.* BURLIG are on board with the idea that they can’t estimate individual-specific treatment effects. They suggest estimating the average treatment effect instead. They suggest taking some of their early data on wages. They have data on firms with and without loans, and want you to compare the average wages paid across the two sets of firms. Describe what this is actually measuring, and provide an example of why this may differ from the average treatment effect.
+
+It sounds like they are asking us to compare firms who took out loans to firms that did not take out loans, and then compare how much they pay their employees after taking out a loan. This could be a problem for some of the reasons I mentioned above. Namely, we don't know that the firms that took out loans and the firms that didn't take out loans are comporable and have similar characteristics. Instead, it might be the case that firms with speciifc traits are selecting into the loan program and their baseline characteristics actually look really, really different from firms that are not recieving loans. Perhaps these firms are more financially troubled, have fewer sales, or less capital than the firms not taking loans. This would mean comparisons between these two groups are not very useful - they would be picking up the effects of these underlying, baseline characteristics that we don't really know anything about yet. If the two groups aren't good counterfactuals for each other, this means we can't draw inferences about potential outcomes. We need to be able to do that to measure the ATE, so without randomization we won't be able to estimate the ATE here. If we try to approximate this using just observed outcomes, we could end up really confusing  or misleading ourselves by using this naive estimator. 
+
+*4.* BURLIG have realized the error of their ways. Their CEO tells you, “Okay, we understand that our data won’t let us estimate the average treatment effect. But can’t we estimate the average treatment effect on the treated?” First formally (in math) define the ATT in this context, and then explain whether or not BURLIG’s data will allow you to estimate it. If so, describe how what you see in the data corresponds to the necessary components of the ATT. If not, explain why not, and describe what you can’t see in the data that you’d need to observe.
+
+The Average Treatment Effect on the Treated (ATT) estimates the impact of treatment only on treated units. In math, it looks like this: 
+
+$$\tau^{ATT} = E[Y_i(1) | D_i = 1] - E[Y_i(0) | D_i = 1]$$
+This expression is asking us, again, to think about a counterfacutal: what is the outcome for a specific firm had they been treated and had they not been treated? Unfortunately, we usually still don't observe $E[Y_i(0) | D_i = 1]$, which is the outcome for treated individuals if they had not been treated. While the data does indicate wheter firms actually "took up" the treatment or not, remember that $D$ isn't indicating just being assigned to the treatment group - it's indicating that the firm actually recieved the treatment. We can simplifying the above expression down to $$\tau^{ATT} = \bar{Y(1)} - \bar{Y(0)}  - E[Y_i(0) | D_i = 1] + E[Y_i(0) | D_i = 0]$$
+
+
+The last term here again describes selection, and illustrates wy the ATE is very different from the ATT.  If this loan program is voluntary, for example, firms that select into treatment might look quite different from those that do not select into treatment. If these groups are not comporable, we can't assume that the sum of the last term is 0. In this case, even though we have the data we need to estimate the first term $\bar{Y(1)} - \bar{Y(0)}$, our estimate will still be off the the value of $E[Y_i(0) | D_i = 1] + E[Y_i(0) | D_i = 0]$ , which is the magnitude of the selection problem and is unobserved. 
+
+
+*5.* BURLIG forgot to tell you that they ran a pilot randomized study to estimate the effects of their loans on wages. They’re happy to share those data with you: find it in ps1_data.csv. This experience has made you a little bit skeptical of BURLIG’s skills, so start by checking (with a proper statistical test) that the treatment group and control group are balanced in pre-treatment wages (measured in dollars), sales, number of workers, and owner gender. Use burlig_trt as your treatment variable. Report your results. What do you find?
+
+Before doing any regression, I created a quick table of simple summary statistics just to explore the data. The wage data looked really strange, and I noticed there was a huge outlier with negative wages. This entry seems like a data error, so I dropped it. If its not a data error, well, good for whoever employs that guy! 
+
+With the outlier out of the way, we can move on to checking balance between treatment and control groups. To do so, I run a simple regression of each baseline variable of interest on the treatment indicator. In English, the regression is telling us the associated effect a one unit increase in the baseline variable has one the treatment indicator (which can be thought of as a probability since its binary). In other words, are any of these variables asssociated with being more or less likely to be in the treatment group? If randomization was done right, the coefficients on these should be tiny and statistically insignificant, indicating there is no impact and the groups are balanced and share similar characteristics. We are also assuming there isn't an imbalanced underlying unobserved characteristic that would be have an impact on our outcome under treatment. In other words, we're assuming that - even if we're missing something that might have an effect on our outcomes - that the trait isn't much more prevelant in either the treatment or control group; that would throw off our balance. 
+
+```{r 5 balance, echo=TRUE}
+#lets dos some simple summarizing 
+baselines_averages<-burlig_dta %>% 
+  group_by(burlig_trt) %>% 
+  summarise(wages_avg = mean(baseline_wages),
+            wages_sd= sd(baseline_wages),
+            sales_avg = mean(baseline_sales), 
+            sales_sd = sd(baseline_sales), 
+            employees = mean(baseline_employees), 
+            employees_sd = sd(baseline_employees),
+            female_avg = mean(baseline_owner_female),
+            female_sd = sd(baseline_owner_female)) 
+
+#there's a huge negative outlier in wages. Seems unlikeley we have negative wages of that amount. Let's drop that observation and run the same thing 
+burlig_dta_noout<- burlig_dta %>% 
+  filter(baseline_wages >=0) 
+
+baselines_sumstats_noout<-burlig_dta_noout %>% 
+  summarise(wages_avg = mean(baseline_wages),
+            wages_sd= sd(baseline_wages),            #this is a huge number relative to mean 
+            sales_avg = mean(baseline_sales), 
+            sales_sd = sd(baseline_sales), 
+            employees = mean(baseline_employees), 
+            employees_sd = sd(baseline_employees),
+            female_avg = mean(baseline_owner_female),
+            female_sd = sd(baseline_owner_female)) %>% 
+  print() 
+
+##pull our our baseline controls and test for balance without outliers 
+
+#pvalue of .63, ~0 coeff
+balance_check_wage<-lm(burlig_trt ~ baseline_wages, data = burlig_dta_noout) %>% 
+  tidy() %>% 
+  print()
+
+#p value of .35, ~0 coeff
+balance_check_sales<-lm(burlig_trt ~baseline_sales, data = burlig_dta_noout) %>% 
+  tidy() %>% 
+  print()
+
+#pvalue .727, ~0 coeff 
+balance_check_employees<-lm(burlig_trt ~  baseline_employees, data = burlig_dta_noout) %>% 
+  tidy() %>%
+  print()
+
+#pvalue .488, .01 coeff: this coeff is a little bigger, but still pretty small magnitude overall  
+balance_check_female<-lm(burlig_trt ~ baseline_owner_female, data = burlig_dta_noout) %>% 
+  tidy() %>% 
+  print()
+```
+
+
+Plot a histogram of wages for treated firms and control firms. What do you see? Redo your balance table to reflect any necessary adjustments. What does this table tell you about whether or not BURLIG’s randomization worked? What assumption do we need to make on unobserved characteristics in order to be able to estimate the causal effect of burlig_trt?
+
+
+When we first plot we can tell somethings off from negative and huge scale of axis, and this tips us off that there is an outlier. When we drop the outlier and plot the histogram we see that like most wage distributions, this is skewed with a lot of values clustered together on the left and long tail on the right. 
+
+Since we're interestd in comparing the groups and seeing if they are similar, I also plot the histogram for the treatment in addition to the control. It looks pretty much like  the control group with the same clutering, counts, and general pattern 
+
+It looks like the randomization was pretty successful, the graphs of wages look similar to each other. When we just do a simple summary of the distribution, statistically we see this is the case as well. Together, this is all nice additional evidence on top of the regression we ran (without the outlier) in question 5 that this RCT is has good balance. 
+
+```{r 6 hist, echo=TRUE}
+#with the outlier included 
+hist_outlier<-ggplot(burlig_dta) +
+    geom_histogram(aes(x=baseline_wages, color = burlig_trt))
+
+#doesnt look too good! the strange scaling to extreme negative values tips us off that there is an outlier
+
+#now lets graph with no outlier: these graphs look pretty similar to each other 
+hist_noout_control<-burlig_dta_noout %>% 
+  filter(burlig_trt == 0) %>%
+ggplot(aes(x=baseline_wages)) +  
+  geom_histogram(bins = 50) %>% 
+  print()
+
+hist_noout_trt<-burlig_dta_noout %>% 
+  filter(burlig_trt == 1) %>%
+ggplot(aes(x=baseline_wages)) +  
+  geom_histogram(bins = 50) %>% 
+  print()
+
+#these look really simalar statistically, so it makes sense that #they look similar visually 
+burlig_dta_noout %>% 
+  filter(burlig_trt == 0) %>% 
+  select(baseline_wages) %>%
+  summary()
+
+burlig_dta_noout %>% 
+  filter(burlig_trt == 1) %>% 
+  select(baseline_wages) %>%
+  summary()
+```
+
+*7.* Assuming that burlig_trt is indeed randomly assigned, describe how to use it to estimate the average treatment effect, and then do so. Please describe your estimate: what is the interpretation of your coefficient (be clear about your units)? Is your result statistically significant? Is the effect you find large or small, relative to the mean in the control group?
+
+We now know that random assigned created two properly balanced treatment and control groups with similar observed underlying characteristics. This means that the average treatment effect can be estimated just with 
+
+$$\tau^{ATE = E[Y_i | D_i = 1] - E[Y_I | D_i = 0]}$$
+
+Because of randomization, this actually simplifies even further to something that looks an awful lot like the naieve estimator. We Simply difference the means between the treated and control group. Remember, though, we can only do this because randomization has eliminated the selection problem. 
+
+$$\hat{\tau}^{ATE} = \bar{Y(1)} - \bar{Y(0)}$$
+
+Regression cant give us a bit more information and allows us to control for baseline characteristics; this allows us to get more accurate estimates by shrinking the size of our standard errors without introducing bias (though I wonder if this inflates our $R^2$ artificially?). Importantly, however, regression is essentially doing the same thing as the simple equation above. Note that we can drop the error term because randomization means that the expectation of or error given the treatment status (values of $D_i$) is 0. 
+
+$$Y_i = \alpha + \tau D_i + \epsilon_i$$ 
+
+or, if we want to include baseline controls 
+
+$$y_i = \alpha + \tau Treat_i + \gamma \textbf{X}_a^{baseline} + \epsilon_i$$
+
+Problem 1 let us know that BURLIG is chiefly interested in the impact of treatment on wages, so lets take a look! 
+
+```{r 7, echo=TRUE}
+#What if we just subtract the means from each group? 
+control_wage_mean<-burlig_dta_noout %>% 
+  filter(burlig_trt == 0) %>% 
+  summarise(avg_wage = mean(endline_wages)) %>%
+  as.numeric()
+
+treat_wage_mean<-burlig_dta_noout %>% 
+  filter(burlig_trt == 1)  %>% 
+  summarise(avg_wage = mean(endline_wages)) %>%
+  as.numeric() %>% 
+  print()
+
+ATE_wages_subtraction<-(treat_wage_mean - control_wage_mean) %>% 
+  print()
+
+#Now what if we use regression? We can add baseline control in, too. 
+ATE_nocontrols_reg<-lm(endline_wages ~ burlig_trt, data = burlig_dta_noout) %>% 
+  tidy() %>%
+  print()
+
+ATE_congrols_reg<-lm(endline_wages ~ burlig_trt + baseline_employees + baseline_owner_female + baseline_sales, data = burlig_dta_noout) %>% 
+  tidy() %>%
+  print()
+```
+
+With no contorls,  recieving the treatment is associated with an average increase in wages of 41,639.25 dollars paid to workers. That's the same value we got from our simple equation above which subtracted the means for control and treatment. This is a relatively large effect - it is  about 4% of the control group's average baseline wages - that may seem like a small number, but if I was a worker I'd want that extra 4% of cash and it is significant. The standard error here is pretty small: at $5,436, the sum of our estimate and standard error will always be greater than 0. In other words, we can be pretty confident that the program had a positive effect on wages.
+
+When we include additional baseline controls, the effect increases a bit so that receiving the treatment loan program is associated with an average increase of 43,333 dollars paid to workers. In line with our expectations, our standard errors shrink just a little bit to $2,598.51. 
+
+The p-value for both results are  statistically significant, so we can be pretty confident that the true, causal impact of the treatment loans on wages was non-zero and positive. 
+
+*8*. BURLIG is convinced that the reason their loans are effective is because they are leading firms to hire new workers. They want you to estimate the effects of their loans, but controlling for endline number of employees. Is this a good idea? Why or why not? Run this regression and describe your estimates. How do they differ from your results in (7)? What about controlling for baseline number of workers? Run this regression and describe your estimates. How do they differ from your results in (7)? How do the two estimates differ? What is driving any differences between them?
+
+
+Notes: this is a bad idea, we never want to control for post-treatment outcomes. This just introduces a new selection problem, and the whole point of the RCT is it gets rid of the seelction problem. 
+
+This regression suggests that recieving the treatment was associated with a decrease in wages of $914.15. With a standard error of 2,538.72, this noisy result is statistically insiginficant. This is pretty different from what we saw in problem 7, where there was a lot of statistical evidence suggesting that the program has a relatively large, positive effect on wages. 
+
+When we control for baseline employees, though, we see an estimate much more similar to the point estimate above - receiving treatment is associate with an increase in wages of $43,306.48. This result is highly statistically significant, and the standard errors (2,598.80) are a lot smaller than they were in the model that included no controls (5,436.200). Adding in controls won't really change our point estimate by much, but it does help us cut through more noise and shrink the size of our standard errors. That's why we sometimes want to include baseline characteristisc as controls when we regress to find the causal average treatment effect from an RCT.  
+
+```{r 8, echo=TRUE}
+#estimate effects of treatment, controling for endline employees 
+endline_controls_reg<-lm(endline_wages ~ burlig_trt + endline_employees, data = burlig_dta_noout) %>% 
+  tidy() %>%
+  print()
+
+baselineemp_controls_reg<-lm(endline_wages ~ burlig_trt + baseline_employees, data = burlig_dta_noout) %>% 
+  tidy() %>%
+  print()
+```
+
+
+*9.* One of the BURLIG RAs (the real workforce!) informs you that not everybody who was assigned to treatment - or was offered a loan - (burlig_trt = 1) actually took out their loan. She tells you that the actual treatment indicator is burlig_trt_take. (Since their loans were unique, we know for a fact that nobody in the control group got one). In light of this new information, what did you actually estimate in question (7)? How does this differ from what you thought you were estimating?
+
+We thought we were estimating the Average Treatment Effect (ATE), but it looks like we actually estimated the Intent To Treat parameter. This changes the interpretation of our estimates. In problem 7, we thought we were estimating the average causal effect or **receiving** treatment. However, because there wasn't perfect compliance, we can now only estimate the causal effect of being **offered** treatment. These are not the same - those who are offered treatment do not always comply and take it. The ATE, though, assumes perfect compliance. 
+
+That is an important difference to keep in mind, but it doesn't neccessarily mean our estimate is useless. In fact, it's possible that what BURLIG is interested in is actually the ITT, since they can't force anyone to take a loan, they can only offer them treatment. Still, understanding the conditional probabilities of compliance may be important: are people not complying as-if at random, or are they selecting into non-compliance conditional on having certain underlying traits? 
+
+*10.* BURLIG aren’t actually interested in the effect of assignment to treatment - they want to know about the actual effects of their loans. Describe (in math, and then in words) what you can estimate using the two treatment variables we observe, burlig_trt and burlig_trt_take. Estimate this object (you can ignore standard errors just for this once). Interpret your findings. How does this compare to what you estimated in (7)?
+
+In this case, we're going to want to find the Local Average Treatment Effect (LATE). Mathmatically, it looks like this: 
+
+$$\frac{\bar{Y}(R_i = 1) - \bar{Y}(R_i = 0)}{\pi^C}$$
+
+
+
+
+Basically, with LATE we'ere looking at the average outcome of those who were assigned to treatment minus the average outcome of those who were assigned to control (this is just our Intent to Treat parameter) and dividing that by the ratio of compliers to everyone (including compliers, those who always take treatment, and those who never take treatment). 
+
+In this way, the LATE parameter estimates the treatment effect for those who actually complied with random assignment. We can't learn too much about those who didn't comply with random assignment, and LATE keeps this in mind. 
+
+Here, our LATE estimate is 98,475.40. In other words, for individuals who actually recieved the treatment loans, the program was associated with an increase in worker wages of  98,475.40. We're ignoring standard errors here, so I'm not sure if this result is statistically significant or not. 
+
+When we compare the LATE to the ITT we estimated in question 7 (with no controls), the difference is pretty stark. In question 7, with no contorls,  being offered the treatment was associated with an average increase in wages of 41,639.25 dollars paid to workers. That's less than half of the LATE, which estimates the causal effect of being offered and actually receiving the treatment! Now, we would still like to know the standard errors to see if this result is statistically significant, but the magnitude of difference here illustrates the importance of specifying our parameters and interpreting them properly. 
+
+
+
+```{r 9, echo=TRUE}
+#Regress Yi on Ri to recover ITT 
+#DV: endline outcome ; IV: being assiged to treatment 
+ITT<-lm(endline_wages ~ burlig_trt, data = burlig_dta_noout) %>% 
+  tidy() %>% 
+  print()    ##point estimate of 41,639.25
+
+#regress Di on Ri to recover complier ratio 
+#DV: actually being treated ; IV: assigned to treatment 
+comp_ratio<-lm(burlig_trt_take ~ burlig_trt, data = burlig_dta_noout) %>% 
+  tidy() %>% 
+  print()       ##point estimtae of .6564
+
+#estimate by dividing ITT by complier ratio 
+LATE<-(64639.25/6.564000e-01) %>% 
+  print() 
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
